@@ -1,49 +1,57 @@
-#define enA 5
-#define in1 7
-#define in2 4
-#define in3 3
-#define in4 2
-#define enB 6
+#include <AFMotor.h>
 
-#define RM_S A0
-#define R_S A1
-#define M_S A2
-#define L_S A3
+AF_DCMotor motor1(1);
+AF_DCMotor motor2(2);
+AF_DCMotor motor3(3);
+AF_DCMotor motor4(4);
+
+#define RM_S A3
+#define R_S A2
+#define M_S A1
+#define L_S A0
 #define LM_S A4
 
 int lms,ls,ms,rs,rms ;
 int check=0;
 
+const int rflamePin = A5;
+const int lflamePin = 7;
+int rFlame = HIGH;
+int lFlame = HIGH;
+
 
 void setup() {
-    
+
+  Serial.begin(9600);
+  pinMode(rflamePin, INPUT);
+  pinMode(lflamePin, INPUT);
+  
   pinMode(R_S, INPUT);
   pinMode(M_S, INPUT);
   pinMode(L_S, INPUT);
   pinMode(RM_S, INPUT);
   pinMode(LM_S, INPUT);
 
-  pinMode(enA, OUTPUT);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
-  pinMode(enB, OUTPUT);
-
   pinMode(LED_BUILTIN, OUTPUT);
-
-  analogWrite(enA, 255);
-  analogWrite(enB, 225);
-  delay(200);
-  
+ 
 }
 
 void loop() {
-  
-  readsensors();
 
-  followline();
+Serial.println(lms);
+Serial.print(ls);
+Serial.print(ms);
+Serial.print(rs);
+Serial.print(rms);
 
+readsensors();
+firefighting();
+followline();
+
+  motor1.run(RELEASE);
+  motor2.run(RELEASE);
+  motor3.run(RELEASE);
+  motor4.run(RELEASE);
 
 }
 
@@ -124,6 +132,47 @@ midturnLeft();
 
 }
 
+void firefighting(){
+
+  rFlame = digitalRead(rflamePin);
+  lFlame = digitalRead(lflamePin);
+
+  Serial.print(rFlame);
+  Serial.println(lFlame);
+
+  if (rFlame == 0){
+
+   stop();
+   motor4.setSpeed(255);
+   motor4.run(FORWARD);
+   
+   }
+  else{
+   forward();
+  }
+  
+  if (lFlame == 0){
+   stop();
+   motor1.setSpeed(255);
+   motor1.run(BACKWARD);
+   }
+  else{
+   forward();
+  }
+  
+  if (rFlame == 0 || lFlame == 0){
+   stop();
+   motor1.setSpeed(255);
+   motor1.run(BACKWARD);
+   motor4.setSpeed(255);
+   motor4.run(FORWARD);
+  }
+  else{
+   forward();
+  }
+  
+}
+
 
 void readsensors(){
   lms = digitalRead(LM_S);
@@ -132,11 +181,6 @@ void readsensors(){
   rs = digitalRead(R_S);
   rms = digitalRead(RM_S);
 
-    Serial.print(lms);
-     Serial.print(ls);
-     Serial.print(ms);
-     Serial.print(rs);
-     Serial.println(rms);
 
 if(lms==HIGH)
 {
@@ -151,88 +195,72 @@ else if(rms==HIGH)
 }
 
 void forward(){
-    analogWrite(enA, 115);
-  analogWrite(enB, 115);
-   digitalWrite(in1, HIGH);
-   digitalWrite(in2, LOW);
-   digitalWrite(in3, HIGH);
-   digitalWrite(in4, LOW);
+
+  motor2.setSpeed(160);
+  motor3.setSpeed(160);
+  motor2.run(FORWARD);
+  motor3.run(FORWARD);
     
 } 
 
-void turnLeft(){
-
-  analogWrite(enA, 155);
-  analogWrite(enB, 155);
-   digitalWrite(in1, HIGH);
-   digitalWrite(in2, LOW);
-   digitalWrite(in3, LOW);
-   digitalWrite(in4, LOW);
-
-  }
-
-
-void sharpturnLeft(){
-  
-  analogWrite(enA, 150);
-  analogWrite(enB, 150);
- 
-   digitalWrite(in1, HIGH);
-   digitalWrite(in2, LOW);
-   digitalWrite(in3, LOW);
-   digitalWrite(in4, HIGH);
-
-  }
-  void midturnLeft(){
-
-  analogWrite(enA, 50);
-  analogWrite(enB, 150);
- 
-  
-   digitalWrite(in1, HIGH);
-   digitalWrite(in2, LOW);
-   digitalWrite(in3, LOW);
-   digitalWrite(in4, HIGH);
-  }
-
 void turnRight(){
- 
-   analogWrite(enA, 155);
-  analogWrite(enB, 155);
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
 
-}
+  motor3.setSpeed(155);
+  motor3.run(FORWARD);
+
+  }
+
+
 void sharpturnRight(){
   
-  analogWrite(enA, 150);
-  analogWrite(enB, 150);
-  digitalWrite(in1, LOW);
-   digitalWrite(in2, HIGH);
-   digitalWrite(in3, HIGH);
-   digitalWrite(in4, LOW);
+  motor2.setSpeed(155);
+  motor3.setSpeed(155);
 
+   motor2.run(BACKWARD);
+   motor3.run(FORWARD);
+   
+  }
+  void midturnRight(){
+
+  motor3.setSpeed(255);
+  motor2.setSpeed(255);
+  motor3.run(FORWARD);
+  motor2.run(BACKWARD);
+  
+
+  }
+
+void turnLeft(){
+
+  motor2.setSpeed(155);
+  motor2.run(FORWARD);
 
 }
+void sharpturnLeft(){
+  
+  motor2.setSpeed(155);
+  motor3.setSpeed(155);
 
-void midturnRight(){
+  motor3.run(BACKWARD);
+  motor2.run(FORWARD);
+  
+}
 
-  analogWrite(enA, 150);
-  analogWrite(enB, 50);
-  digitalWrite(in1, LOW);
-   digitalWrite(in2, HIGH);
-   digitalWrite(in3, HIGH);
-   digitalWrite(in4, LOW);
+void midturnLeft(){
+
+  motor2.setSpeed(255);
+  motor3.setSpeed(255);
+  motor2.run(FORWARD);
+  motor3.run(BACKWARD);
 
 }
 
 void stop(){
 
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, LOW);
-  
+  motor2.setSpeed(0);
+  motor3.setSpeed(0);
+  motor2.run(RELEASE);
+  motor3.run(RELEASE);
+  delay(2500);
+ 
 }
